@@ -4,9 +4,9 @@ set -e
 
 function Help() {
     cat <<EOF
-Usage: hyprshot [options ..] [-m [mode] ..] -- [command]
+Usage: hyprshot-jxl [options ..] [-m [mode] ..] -- [command]
 
-Hyprshot is an utility to easily take screenshot in Hyprland using your mouse.
+Hyprshot-JXL is a utility to easily take screenshot in Hyprland using your mouse.
 
 It allows taking screenshots of windows, regions and monitors which are saved to a folder of your choosing and copied to your clipboard.
 
@@ -111,20 +111,20 @@ function save_geometry() {
     local output=""
 
     if [ $RAW -eq 1 ]; then
-        grim -g "${geometry}" -
+        grim -g "${geometry}" - | magick - jxl:-
         return 0
     fi
 
     if [ $CLIPBOARD -eq 0 ]; then
         mkdir -p "$SAVEDIR"
-        grim -g "${geometry}" "$SAVE_FULLPATH"
+        grim -g "${geometry}" - | magick - "$SAVE_FULLPATH"
         output="$SAVE_FULLPATH"
-        wl-copy --type image/png < "$output"
+        wl-copy --type image/jxl < "$output"
         [ -z "$COMMAND" ] || {
             "$COMMAND" "$output"
         }
     else
-        wl-copy --type image/png < <(grim -g "${geometry}" -)
+        wl-copy --type image/jxl < <(grim -g "${geometry}" - | magick - jxl:-)
     fi
 
     send_notification $output
@@ -307,11 +307,11 @@ NOTIF_TIMEOUT=5000
 CURRENT=0
 FREEZE=0
 [ -z "$XDG_PICTURES_DIR" ] && type xdg-user-dir &> /dev/null && XDG_PICTURES_DIR=$(xdg-user-dir PICTURES)
-FILENAME="$(date +'%Y-%m-%d-%H%M%S_hyprshot.png')"
+FILENAME="$(date +'screenshot_%Y-%m-%d_%H%M%S.jxl')"
 [ -z "$HYPRSHOT_DIR" ] && SAVEDIR=${XDG_PICTURES_DIR:=~} || SAVEDIR=${HYPRSHOT_DIR}
 
 args $0 "$@"
 
-SAVE_FULLPATH="$SAVEDIR/$FILENAME"
+SAVE_FULLPATH="$SAVEDIR/screenshots/$FILENAME"
 [ $CLIPBOARD -eq 0 ] && Print "Saving in: %s\n" "$SAVE_FULLPATH"
 begin_grab $OPTION & checkRunning
